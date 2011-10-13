@@ -17,6 +17,11 @@ These SMS -objects are then broadcasted to Hook.IO cloud
 This is Hook.IO hook which listens for incoming messages and translates them to configured service implementation
 actions.
 
+# For developer
+
+After cloning, install using npm "npm install . --local" and to enable implementations you have to 
+symlink them to node_modules -folder, so "cd node_modules && ln -s ../implementations/NAME ."
+
 # Testing
 
 Currently to do message parsing flow test run (inside the project dir) "./bin/incoming_server"
