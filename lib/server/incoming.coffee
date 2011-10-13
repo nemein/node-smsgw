@@ -31,6 +31,10 @@ class IncomingHook extends Hook
     http.createServer (req, res) =>
       body = ''
       
+      unless req.url.match(/^\/incoming/) or req.url.match(/^\/report/)
+        console.log 'url not starting with /incoming or /report'
+        return
+      
       # Buffer up all the body data from incoming request
       req.on 'data', (data) ->
         body += data
@@ -43,7 +47,12 @@ class IncomingHook extends Hook
         return unless imp_name
         
         @_spawnImplementation imp_name, =>
-          @emit "smsgw_parse_messages",
+          hook_name = "smsgw_parse_messages"
+          if req.url.match(/^\/report/)
+            hook_name = "smsgw_parse_report"
+          console.log 'hook_name',hook_name
+          
+          @emit hook_name,
             url: req.url
             body: body
           , (err, result) =>
@@ -68,7 +77,7 @@ class IncomingHook extends Hook
   _determineImplementation: (req) ->    
     imp_name = null
     
-    if req.url and req.url.length > 1
+    if req.url and req.url.replace('/incoming').length > 1
       # Determine from url
       _.each @implementations, (config, name) =>
         if req.url.match(new RegExp(name, "gi"))

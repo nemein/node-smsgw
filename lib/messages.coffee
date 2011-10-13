@@ -37,13 +37,19 @@ class Message
   concatenate: false
   header: null
   wap_text: null
-  wap_url: null
+  wap_url: null  
+  report_url: null
   
+  _serialize_attrs: [
+    'parser', 'id', 'deliveryTime', 'validityPeriod', 'keywords', 'operator', 'parameters',
+    'recipients', 'sender', 'serviceName', 'serviceNumber', 'text', 'binary', 'msg_class', 'unicode',
+    'concatenate', 'header', 'wap_text', 'wap_url', 'report_url'
+  ]
+    
   parser: null
 
   constructor: (receiver, content) ->    
     @id = uuid()
-    
     if receiver
       @addRecipient receiver
     if content
@@ -71,8 +77,8 @@ class Message
     @binary = null
     @text = null
 
-  addRecipient: (receiver) ->
-    @recipients.push receiver
+  addRecipient: (receiver) ->    
+    @recipients.push receiver unless @hasRecipient receiver
   
   hasRecipient: (receiver) ->
     true if receiver in @recipients
@@ -106,16 +112,21 @@ class Message
     if datetime
       @validityPeriod = datetime
   
-  getContent: () ->
+  setReportUrl: (@report_url) ->
+  getReportUrl: ->
+    @report_url
+    
+  getContent: ->
     if @binary
       return @binary
     return @text
   
-  getPostDataParts: () ->
+  getPostDataParts: ->
     return {}
     
   toObject: () ->
     return {
+      type: Message.type
       id: @id
       recipients: @recipients
       sender: @sender
@@ -124,11 +135,25 @@ class Message
       parameters: @parameters
       content: @getContent()      
     }
+  
+  toJSON: ->
+    vals = {type: @__proto__.constructor.name}
+    
+    for key in @_serialize_attrs
+      vals[key] = @[key]
+    
+    JSON.stringify vals
+  
+  fromJSON: (data) ->
+    for key in @_serialize_attrs
+      @[key] = data[key]
     
 class SMS extends Message
-  @type = "sms"
   @MAX_HEADER_LENGTH = 140
-    
+  
+  contructor: (receiver, content) ->    
+    super reciever, content    
+  
   setHeader: (header) ->
     if header and header <= SMSMessage.MAX_HEADER_LENGTH
       @header = header
@@ -158,6 +183,72 @@ class SMS extends Message
       parts['class'] = @msg_class
       
     return parts
+
+class MMS extends Message
+  @MAX_SUBJECT_LENGTH = 40  
+  
+  subject: null
+  adaptations: false
+  autoSmil: false
+  objects: []
+  
+  contructor: (receiver, content) ->    
+    super reciever, content    
+    @_serialize_attrs = @_serialize_attrs.concat ['subject', 'adaptations', 'autoSmil', 'ser_objects']
+  
+  setSubject: (subject) ->
+    if subject and subject.length <= MMSMessage.MAX_SUBJECT_LENGTH
+      @subject = subject
+  
+  addObject: (obj) ->
+    if obj is MMSObject
+      @objects.push obj
+  
+  getText: () ->
+    if @text
+      @text
+    for obj in @objects
+      if obj.isText
+        obj.content
+  
+  toJSON: ->
+    @ser_objects = {}
+    for obj in @objects
+      @ser_objects.push obj.serialize()
+    super()
+
+class MMSObject  
+  @FORMAT_BINARY = "binary"
+  @FORMAT_FILE = "file"
+  @FORMAT_TEXT = "text"
+  
+  content: null
+  filename: null
+  format: null
+  content_type: null
+  
+  getContentLength: () ->
+    if @isText() or @isBinary()
+      @content.length
+    else
+      #TODO: find out filesize
+      return 0
+  
+  isText: () ->
+    @content_type is MMSObject.FORMAT_TEXT
+
+  isBinary: () ->
+    @content_type is MMSObject.FORMAT_BINARY
+  
+  setBinaryContent: (bytes) ->
+    @content_type = MMSObject.FORMAT_BINARY
+    @content = bytes
+    
+  setTextContent: (text) ->
+    @content_type = MMSObject.FORMAT_TEXT
+    @content = text
+  
+  serialize: -> return {}
 
 class DeliveryReport
   @STATE_DELIVERED = "OK"
@@ -210,4 +301,17 @@ class DeliveryReport
     }
 
 module.exports.SMS = SMS
+module.exports.MMS = MMS
 module.exports.DeliveryReport = DeliveryReport
+
+module.exports.serialize = (message) ->
+  message.toJSON()
+module.exports.unserialize = (data) ->
+  message_class = SMS
+  if data.type and data.type == 'MMS'
+    message_class = MMS
+  
+  msg = new message_class()
+  msg.fromJSON JSON.parse data
+  
+  msg

@@ -19,6 +19,8 @@ http = require('http')
 util = require('util')
 _ = require('underscore')._
 
+messages = require '../messages'
+
 class OutgoingHook extends Hook
   spawned: {}
   
@@ -33,21 +35,48 @@ class OutgoingHook extends Hook
   
   _handleRequest: (data, cb) ->  
     imp_name = @_determineImplementation @event
-    console.log 'resolved to implementation',imp_name
+    #console.log 'resolved to implementation',imp_name
     return unless imp_name
   
     @_spawnImplementation imp_name, =>
-      hook_name = "smsgw_send_message"
+      hook_name = "smsgw_send_message"      
       if Array.isArray data
         hook_name = "smsgw_send_messages"
-
-      @emit hook_name, data, (err, result) =>        
+      
+      @emit hook_name, @_convertToMessages(imp_name, data), (err, result) =>
         if err
-          return @emit "smsgw_outgoing_errors", err
-        @emit "smsgw_outgoing_results", result
+          @emit "smsgw_outgoing_errors", err
+        else
+          @emit "smsgw_outgoing_results", result
         cb err, result
     
     @log @name, 'Outgoing SMS server started', @port
+  
+  _convertToMessages: (imp_name, datas) ->
+    unless Array.isArray datas
+      return @_convertToMessage imp_name, datas
+    messages = []
+    _.each datas, (data) ->
+      messages.push @_convertToMessage imp_name, data
+      
+    return messages
+  
+  _convertToMessage: (imp_name, data) ->
+    message_class = messages.SMS
+    if data.type and data.type.toLowerCase() == 'mms'
+      message_class = messages.MMS
+    
+    message = new messages.SMS(data.receiver, data.content)
+    message.parser = imp_name
+    
+    if data.message_class and _.include message_class.AVAILABLE_CLASSES, data.message_class
+      message.msg_class = data.message_class
+        
+    message.setSender data.sender if data.sender
+    
+    message = messages.serialize message
+    
+    return message    
   
   _determineImplementation: (event_name) ->    
     #console.log '_determineImplementation from ',event_name
@@ -55,10 +84,7 @@ class OutgoingHook extends Hook
     
     imp_name
       
-  _spawnImplementation: (name, next) ->
-    console.log 'spawn',name
-    console.log @implementations
-    
+  _spawnImplementation: (name, next) ->    
     if @spawned[name]
       return next()
     

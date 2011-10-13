@@ -4,6 +4,10 @@
       "referer": "gw.labyrintti.com",
       "allowed_ips": [],
       "config": {
+        "host": "gw.labyrintti.com",
+        "port": 28080,
+        "secure": false,
+        "report_url": "",
         "api_user": "",
         "api_password": ""
       }      

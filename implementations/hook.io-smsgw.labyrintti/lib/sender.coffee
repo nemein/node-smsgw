@@ -14,23 +14,96 @@ Copyright 2011 Jerry Jalava <jerry.jalava@nemein.com>
     limitations under the License.
 ###
 
+http = require 'http'
 querystring = require 'querystring'
+_ = require('underscore')._
 
 messages = require('node-smsgw').Messages
 
 class Sender
   constructor: (@options) ->
   
-  send: (data, cb) ->
-    console.log 'send',data
+  send: (data, cb) ->    
+    msg = messages.unserialize data
+    #console.log 'msg',msg
     
-    msg = data.message # Instance of messages.SMS or messages.MMS
-    #msg = new messages.SMS data.receiver, data.content
+    sendResponse = (err, response) ->
+      #console.log 'sendResponse',err,response
+      return cb err if err
+      cb null, response
     
-    results = null
+    #url = @_getServiceUrl msg
+    http_options = 
+      host: @_getServiceHost()
+      port: @options.port
+      path: @_getServicePath(msg)
+      method: 'POST'
+      headers:
+        'content-type': 'application/x-www-form-urlencoded'
     
-    unless results
-      return cb {status: 'failed'}      
-    cb null, results
+    process.on 'uncaughtException', (err) ->
+      result =
+        code: err.code
+        errno: err.errno
+        msg: err.message
+      sendResponse result
+    
+    try
+      req = http.request http_options, (res) ->
+        
+        res.setEncoding 'utf8'
+        body = ''
+        res.on 'data', (chunk) ->
+          body += chunk
+        req.on 'end', () ->
+          result =
+            code: res.statusCode
+            status: 'FAILED'
+            msg: querystring.parse body
+        
+          if res.statusCode == 200
+            result.status = 'OK'
+            sendResponse null, result
+          else            
+            sendResponse result
+      req.write @_generatePostData(msg)
+      req.end()
+    catch err
+      result =
+        code: err.code
+        errno: err.errno
+        msg: err.message
+      return sendResponse result
+  
+  _getServiceHost: () ->
+    url = "http://"
+    if @options.secure
+      url = "https://"
+    url += @options.host
+    url
+  
+  _getServicePath: (msg) ->
+    type = msg.__proto__.constructor.name.toLowerCase()
+    
+    return "/sendsms" if type is "sms"
+    return "/sendmms" if type is "mms"    
+    "/sendsms"
+  
+  _generatePostData: (msg) ->
+    data = 
+      user: @options.api_user
+      password: @options.api_password
+    
+    report_url = null
+    if @options.report_url
+      report_url = @options.report_url
+    if msg.getReportUrl()
+      report_url = msg.getReportUrl()
+    
+    if report_url
+      data['report'] = @config.options.client.report_url
+    
+    data = _.extend data, msg.getPostDataParts()    
+    querystring.stringify(data) + "\n"
     
 exports = module.exports = Sender
