@@ -19,6 +19,8 @@ http = require('http')
 util = require('util')
 _ = require('underscore')._
 
+messages = require '../messages'
+
 class IncomingHook extends Hook
   spawned: {}
   
@@ -50,7 +52,6 @@ class IncomingHook extends Hook
           hook_name = "smsgw_parse_messages"
           if req.url.match(/^\/report/)
             hook_name = "smsgw_parse_report"
-          console.log 'hook_name',hook_name
           
           @emit hook_name,
             url: req.url
@@ -63,8 +64,9 @@ class IncomingHook extends Hook
               res.end result.body
             else
               res.end()
-          
+            
             if result.message
+              result.message = messages.unserialize result.message
               @emit 'smsgw_incoming', result.message
               if result.message.keywords.length
                 keywords = result.message.keywords.join("|").toLowerCase()
@@ -73,14 +75,16 @@ class IncomingHook extends Hook
     .listen @port
     
     @log @name, 'Incoming SMS server started', @port
+    @log @name, 'Handling messages at /incoming and delivery reports at /reports'
   
   _determineImplementation: (req) ->    
     imp_name = null
     
-    if req.url and req.url.replace('/incoming').length > 1
+    url = req.url
+    if url and url.replace('/incoming', '').length > 1
       # Determine from url
       _.each @implementations, (config, name) =>
-        if req.url.match(new RegExp(name, "gi"))
+        if url.match(new RegExp(name, "gi"))
           imp_name = name
     
     return imp_name if imp_name
