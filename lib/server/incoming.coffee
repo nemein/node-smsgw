@@ -56,7 +56,11 @@ class IncomingHook extends Hook
               res.end()
           
             if result.message
-              @emit 'smsgw::incoming', result.message
+              @emit 'smsgw_incoming', result.message
+              if result.message.keywords.length
+                keywords = result.message.keywords.join("|").toLowerCase()
+                @emit "smsgw_incoming.#{keywords}", result.message
+                
     .listen @port
     
     @log @name, 'Incoming SMS server started', @port

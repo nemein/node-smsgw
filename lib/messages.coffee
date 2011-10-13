@@ -38,10 +38,10 @@ class Message
   header: null
   wap_text: null
   wap_url: null
+  
+  parser: null
 
-  constructor: (receiver, content) ->
-    @_clearValues()
-    
+  constructor: (receiver, content) ->    
     @id = uuid()
     
     if receiver
@@ -124,26 +124,6 @@ class Message
       parameters: @parameters
       content: @getContent()      
     }
-  
-  _clearValues: () ->    
-    @id = null
-    @deliveryTime = null
-    @validityPeriod = null
-    @keywords = null
-    @operator = null
-    @parameters = {}
-    @recipients = []
-    @sender = null
-    @serviceName = null
-    @serviceNumber = null
-    @text = null
-    @binary = null
-    @msg_class = "normal"
-    @unicode = false
-    @concatenate = false
-    @header = null
-    @wap_text = null
-    @wap_url = null
     
 class SMS extends Message
   @type = "sms"

@@ -14,7 +14,6 @@ Copyright 2011 Jerry Jalava <jerry.jalava@nemein.com>
     limitations under the License.
 ###
 
-Hook = require('hook.io').Hook
 querystring = require 'querystring'
 
 messages = require('node-smsgw').Messages
@@ -26,10 +25,11 @@ class Parser
     body = querystring.parse data.body
     
     msg = new messages.SMS
+    msg.parser = 'labyrintti'
     msg.setSender body.source || body.from_number
     msg.addRecipient body.dest      
     msg.operator = body.operator
-    msg.keywords = body.keyword
+    msg.keywords = [body.keyword]
     msg.parameters = body.params.split(" ")
     if body.header
       msg.header = body.header

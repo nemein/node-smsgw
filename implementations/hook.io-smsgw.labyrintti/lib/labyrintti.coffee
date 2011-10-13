@@ -16,17 +16,40 @@ Copyright 2011 Jerry Jalava <jerry.jalava@nemein.com>
 
 Hook = require('hook.io').Hook
 Parser = require './parser'
-#Sender = require 'sender'
+Sender = require './sender'
 
 class MainHook extends Hook
   constructor: (@options) ->
     super @options
     
     @parser = new Parser(@options)
+    @sender = new Sender(@options)
     
     @on '*::smsgw_parse_messages', @_parseMessages
+    @on '*::smsgw_send_messages', @_sendMessages
+    @on '*::smsgw_send_message', @_sendMessage
   
   _parseMessages: (data, cb) ->
-    @parser.parse(data, cb)
+    @parser.parse data, cb
+  
+  _sendMessages: (data, cb) ->
+    message_count = data.length
+    sent_messages = 0
+    results = []
+    
+    next = (err, res) ->
+      sent_messages += 1
+      if err
+        results.push err
+      else
+        results.push res
+      if sent_messages == message_count
+        cb null, results
+    
+    _.each data, (msg) =>
+      @_sendMessage msg, next
+  
+  _sendMessage: (msg, cb) ->
+    @sender.send msg, cb
     
 exports.MainHook = MainHook
