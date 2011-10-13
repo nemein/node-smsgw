@@ -28,8 +28,6 @@ class IncomingHook extends Hook
     @on 'hook::ready', @_startServer()
   
   _startServer: ->
-    console.log '_startServer'    
-    
     @_loadParsers()
     
     http.createServer (req, res) =>
@@ -91,6 +89,8 @@ class IncomingHook extends Hook
   _startParser: (name)->
     if @parsers[name]
       return
+    
+    # TODO: Split implementations to own modules, so we can just spawn them
     
     opts = @implementations[name]
     config = _.extend {name: "#{name}-parser", debug: @debug}, opts.config
