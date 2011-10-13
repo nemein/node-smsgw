@@ -44,5 +44,17 @@ class Parser
       ]
       body: 'OK'
       message: msg
+  
+  parseReport: (data, cb) ->
+    body = querystring.parse data.body
     
+    report = new messages.DeliveryReport body.source, body.dest, body.status, body.code, body.message, body.msgid
+    
+    cb null,
+      headers: [
+        200: {'content-type': 'text/plain'}
+      ]
+      body: 'OK'
+      message: messages.serialize report
+  
 exports = module.exports = Parser

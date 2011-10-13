@@ -26,11 +26,15 @@ class MainHook extends Hook
     @sender = new Sender(@options)
     
     @on '*::smsgw_parse_messages', @_parseMessages
+    @on '*::smsgw_parse_reports', @_parseReports    
     @on '*::smsgw_send_messages', @_sendMessages
     @on '*::smsgw_send_message', @_sendMessage
   
   _parseMessages: (data, cb) ->
     @parser.parse data, cb
+    
+  _parseReports: (data, cb) ->
+    @parser.parseReport data, cb
   
   _sendMessages: (data, cb) ->
     message_count = data.length

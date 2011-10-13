@@ -34,7 +34,7 @@ class IncomingHook extends Hook
       body = ''
       
       unless req.url.match(/^\/incoming/) or req.url.match(/^\/report/)
-        console.log 'url not starting with /incoming or /report'
+        #console.log 'url not starting with /incoming or /report'
         return
       
       # Buffer up all the body data from incoming request
@@ -50,8 +50,10 @@ class IncomingHook extends Hook
         
         @_spawnImplementation imp_name, =>
           hook_name = "smsgw_parse_messages"
+          response_hook_name = "smsgw_incoming"
           if req.url.match(/^\/report/)
-            hook_name = "smsgw_parse_report"
+            hook_name = "smsgw_parse_reports"
+            response_hook_name = "smsgw_incoming_report"
           
           @emit hook_name,
             url: req.url
@@ -67,10 +69,11 @@ class IncomingHook extends Hook
             
             if result.message
               result.message = messages.unserialize result.message
-              @emit 'smsgw_incoming', result.message
-              if result.message.keywords.length
+              
+              @emit response_hook_name, result.message
+              if result.message.keywords and result.message.keywords.length
                 keywords = result.message.keywords.join("|").toLowerCase()
-                @emit "smsgw_incoming.#{keywords}", result.message
+                @emit "#{response_hook_name}.#{keywords}", result.message
                 
     .listen @port
     

@@ -126,7 +126,7 @@ class Message
     
   toObject: () ->
     return {
-      type: Message.type
+      type: @__proto__.constructor.name
       id: @id
       recipients: @recipients
       sender: @sender
@@ -261,6 +261,10 @@ class DeliveryReport
   description: null
   original_recipient: null
   recipient: null
+  
+  _serialize_attrs: [
+    "message_id", "state", "error", "error_msg", "description", "original_recipient", "recipient"
+  ]
 
   constructor: (@recipient, @original_recipient, @state, @error, @description, @message_id) ->
     return
@@ -292,13 +296,29 @@ class DeliveryReport
   
   toObject: () ->
     return {
+      type: @__proto__.constructor.name
       id: @message_id
       recipient: @recipient
       original_recipient: @original_recipient
       state: @state
       error: @error
+      error_msg: @getErrorMessage()
       description: @description 
     }
+    
+  toJSON: ->
+    vals = 
+      type: @__proto__.constructor.name
+      error_msg: @getErrorMessage()
+
+    for key in @_serialize_attrs
+      vals[key] = @[key]
+
+    JSON.stringify vals
+
+  fromJSON: (data) ->
+    for key in @_serialize_attrs
+      @[key] = data[key]
 
 module.exports.SMS = SMS
 module.exports.MMS = MMS
@@ -307,11 +327,16 @@ module.exports.DeliveryReport = DeliveryReport
 module.exports.serialize = (message) ->
   message.toJSON()
 module.exports.unserialize = (data) ->
+  data = JSON.parse data
+  
   message_class = SMS
-  if data.type and data.type == 'MMS'
-    message_class = MMS
+  if data.type
+    if data.type == 'MMS'
+      message_class = MMS
+    else if data.type == 'DeliveryReport'
+      message_class = DeliveryReport
   
   msg = new message_class()
-  msg.fromJSON JSON.parse data
+  msg.fromJSON data
   
   msg
