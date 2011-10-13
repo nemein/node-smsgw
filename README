@@ -1,5 +1,3 @@
-# UNDER DEVELOPMENT
-
 # SMS Gateway
 
 This is SMS Gateway service built on top of Node.JS
@@ -29,7 +27,5 @@ and then on other terminal run "coffee tests/send_simple_sms.coffee"
 
 # Supported services
 
-* Labyrintti
-
-
+* Labyrintti (State: Alpha)
 
