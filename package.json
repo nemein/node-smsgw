@@ -6,7 +6,7 @@
   "author": "Jerry Jalava <jerry.jalava@nemein.com>",
   "repository": {
     "type": "git",
-    "url": "git://github.com/jerryjj/smsgw.git"
+    "url": "git@github.com:nemein/node-smsgw.git"
   },
   "bin": {
     "hookio-smsgw_incoming": "./bin/incoming_server",
