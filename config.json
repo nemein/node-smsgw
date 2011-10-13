@@ -1,0 +1,12 @@
+{
+  "implementations": {
+    "labyrintti": {
+      "referer": "gw.labyrintti.com",
+      "allowed_ips": [],
+      "config": {
+        "api_user": "",
+        "api_password": ""
+      }      
+    }      
+  }
+}

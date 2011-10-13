@@ -1,0 +1,27 @@
+{
+  "name": "smsgw",
+  "description": "SMS Gateway service",
+  "version": "0.0.1",
+  "homepage": "http://",
+  "author": "Jerry Jalava <jerry.jalava@nemein.com>",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jerryjj/smsgw.git"
+  },
+  "bin": {
+    "hookio-smsgw_incoming": "./bin/incoming_server",
+    "smsgw_manager": "./bin/manager_server"
+  },
+  "engines": {
+    "node": ">= 0.4.7"
+  },
+  "dependencies": {
+    "coffee-script": ">= 1.0.1",
+    "async": ">= 0.1.9",
+    "redis-node": ">= 0.4.0",
+    "hook.io": ">= 0.7.0",
+    "long-stack-traces": ">= 0.1.2",
+    "node-uuid": "1.2.0"
+  },
+  "devDependencies": {}
+}

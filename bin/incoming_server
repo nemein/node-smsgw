@@ -1,0 +1,13 @@
+#! /usr/bin/env coffee
+
+Incominghook = require(__dirname + '/../lib/server/incoming').IncomingHook
+
+incomingServer = new Incominghook
+  name: 'smsgw-incoming-server'
+  port: 9000
+  debug: true
+
+incomingServer.on 'smsgw::incoming', (message) ->
+  console.log 'Got message',message
+
+incomingServer.start()
