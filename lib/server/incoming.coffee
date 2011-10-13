@@ -20,7 +20,7 @@ util = require('util')
 _ = require('underscore')._
 
 class IncomingHook extends Hook
-  parsers: {}
+  spawned: {}
   
   constructor: (options) ->
     super options
@@ -28,8 +28,6 @@ class IncomingHook extends Hook
     @on 'hook::ready', @_startServer()
   
   _startServer: ->
-    @_loadParsers()
-    
     http.createServer (req, res) =>
       body = ''
       
@@ -40,62 +38,59 @@ class IncomingHook extends Hook
       # On the end of the request, emit a hook.io message with SMSMessage payload
       req.on 'end', () =>
         
-        parser_name = @_determineParser req
-        console.log 'resolved to parser',parser_name
-        return unless parser_name
+        imp_name = @_determineImplementation req
+        #console.log 'resolved to implementation',imp_name
+        return unless imp_name
+        
+        @_spawnImplementation imp_name, =>
+          @emit "smsgw_parse_messages",
+            url: req.url
+            body: body
+          , (err, result) =>
+            if result.headers
+              _.each result.headers, (opts, code) ->
+                res.writeHead code, opts
+            if result.body
+              res.end result.body
+            else
+              res.end()
           
-        @emit "smsgw::#{parser_name}::parse",
-          url: req.url
-          body: body
-        , (err, response) =>
-          if response.headers
-            _.each response.headers, (opts, code) ->
-              res.writeHead code, opts
-          if response.body
-            res.end response.body
-          else
-            res.end()
-          
-          if response.message
-            @emit 'smsgw::incoming', response.message
+            if result.message
+              @emit 'smsgw::incoming', result.message
     .listen @port
     
     @log @name, 'Incoming SMS server started', @port
   
-  _determineParser: (req) ->    
-    parser = null
+  _determineImplementation: (req) ->    
+    imp_name = null
     
     if req.url and req.url.length > 1
       # Determine from url
       _.each @implementations, (config, name) =>
         if req.url.match(new RegExp(name, "gi"))
-          parser = name
+          imp_name = name
     
-    return parser if parser
+    return imp_name if imp_name
     
     if req.headers.referer
       # Determine from referer
       _.each @implementations, (config, name) ->
         if config.referer
           if req.headers.referer.match(new RegExp(config.referer, "gi"))
-            parser = name
+            imp_name = name
         
-    parser
-  
-  _loadParsers: ->
-    _.each @implementations, (opts, name) =>
-      @_startParser name
+    imp_name
       
-  _startParser: (name)->
-    if @parsers[name]
-      return
+  _spawnImplementation: (name, next) ->
+    if @spawned[name]
+      return next()
     
-    # TODO: Split implementations to own modules, so we can just spawn them
+    spawn_data = _.extend {type: "smsgw.#{name}", name: name, debug: @debug}, @implementations[name].config
     
-    opts = @implementations[name]
-    config = _.extend {name: "#{name}-parser", debug: @debug}, opts.config
-    parser = require("../implementations/#{name}/parser")
-    @parsers[name] = new parser(config)
-    @parsers[name].start()
+    @on "children::ready", =>
+      next()
+    
+    @spawn [spawn_data], =>
+      @spawned[name] = true
 
 exports.IncomingHook = IncomingHook

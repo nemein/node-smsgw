@@ -1,5 +1,5 @@
 {
-  "name": "smsgw",
+  "name": "node-smsgw",
   "description": "SMS Gateway service",
   "version": "0.0.1",
   "homepage": "http://",
@@ -8,10 +8,14 @@
     "type": "git",
     "url": "git@github.com:nemein/node-smsgw.git"
   },
+  "keywords": [
+    "hook.io", "hook", "sms", "sms gateway"
+  ],
   "bin": {
     "hookio-smsgw_incoming": "./bin/incoming_server",
     "smsgw_manager": "./bin/manager_server"
   },
+  "main": "./lib/gateway",
   "engines": {
     "node": ">= 0.4.7"
   },

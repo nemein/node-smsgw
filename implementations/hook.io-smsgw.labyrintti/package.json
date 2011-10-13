@@ -1,0 +1,19 @@
+{
+  "name": "hook.io-smsgw.labyrintti",
+  "description": "Labyrintti Hook for SMS Gateway service",
+  "version": "0.0.1",
+  "homepage": "http://",
+  "author": "Jerry Jalava <jerry.jalava@nemein.com>",
+  "keywords": [
+    "hook.io", "hook", "sms", "sms gateway implementation", "labyrintti"
+  ],
+  "main": "./lib/labyrintti",
+  "engines": {
+    "node": ">= 0.4.7"
+  },
+  "dependencies": {
+    "coffee-script": ">= 1.0.1"
+    ,"node-smsgw": ">= 0.0.1"
+  },
+  "devDependencies": {}
+}

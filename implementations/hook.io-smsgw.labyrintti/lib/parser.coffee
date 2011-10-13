@@ -17,14 +17,12 @@ Copyright 2011 Jerry Jalava <jerry.jalava@nemein.com>
 Hook = require('hook.io').Hook
 querystring = require 'querystring'
 
-messages = require '../../messages'
+messages = require('node-smsgw').Messages
 
-class ParserHook extends Hook
-  constructor: (options) ->
-    super options
-    @on '*::smsgw::labyrintti::parse', @_parse
+class Parser
+  constructor: (@options) ->
   
-  _parse: (data, cb) ->
+  parse: (data, cb) ->
     body = querystring.parse data.body
     
     msg = new messages.SMS
@@ -47,5 +45,4 @@ class ParserHook extends Hook
       body: 'OK'
       message: msg
     
-
-exports = module.exports = ParserHook
+exports = module.exports = Parser
