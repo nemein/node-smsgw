@@ -1,25 +1,33 @@
-request = require 'request'
-querystring = require 'querystring'
+Hook = require('hook.io').Hook
 
-INCOMING_SERVER_PORT = 9000
+class SenderHook extends Hook
+  constructor: (@options) ->
+    super @options
+  
+  sendMessage: (data) ->
+    console.log 'sending message'
+    console.log '  receiver:',data.receiver
+    console.log '  content:',data.content
+    
+    @on "*::smsgw_outgoing_results", (results) ->
+      console.log 'emitted results',results
+    @on "*::smsgw_outgoing_errors", (errors) ->
+      console.log 'emitted errors',errors
+    
+    @emit "smsgw::outgoing::#{@options.service}", data, (err, results) ->
+      console.log 'callback response'
+      if err
+        console.log 'got error',err
+        return
+      console.log 'got results',results
+    
 
-TEST_SENDER = "1234567890"
+sender = new SenderHook
+  name: 'test-sender'
+  service: 'labyrintti'
+  debug: true
 
-request 
-  uri: "http://localhost:#{INCOMING_SERVER_PORT}/labyrintti"
-  method: "POST"
-  headers:
-    'Referer': 'gw.labyrintti.com:28080'
-    'Content-Type': 'application/x-www-form-urlencoded'
-  body: querystring.stringify
-    source: TEST_SENDER
-    operator: "nodejs"
-    dest: "12345"
-    keyword: "SMSGW"
-    params: "sample message"
-    text: "test sample message"
-  , (err, res, body) ->
-    if err
-      throw err
-    console.log 'Got response headers',res.headers
-    console.log 'Got response body',body
+sender.on 'hook::ready', ->
+  sender.sendMessage {receiver: '+3581234567', content: 'Hello, World!'}
+
+sender.start()
