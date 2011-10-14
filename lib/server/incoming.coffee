@@ -84,7 +84,7 @@ class IncomingHook extends Hook
     imp_name = null
     
     url = req.url
-    if url and url.replace('/incoming', '').length > 1
+    if url and (url.replace('/incoming', '').length > 1 or url.replace('/report', '').length > 1)
       # Determine from url
       _.each @implementations, (config, name) =>
         if url.match(new RegExp(name, "gi"))
