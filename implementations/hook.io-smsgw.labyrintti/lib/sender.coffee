@@ -63,6 +63,7 @@ class Sender
         
           if res.statusCode == 200
             result.status = 'OK'
+            result = @_parseResultString msg, body, result
             sendResponse null, result
           else            
             sendResponse result
@@ -74,6 +75,27 @@ class Sender
         errno: err.errno
         msg: err.message
       return sendResponse result
+  
+  _parseResultString: (msg, body, result) ->
+    body = decodeURIComponent body
+    
+    lines = body.split("\n")
+    result.msg = body
+    result.statuses = []
+    _.each lines, (line) ->
+      line_parts = line.match /^(\+[0-9]+) (\w+) (\d+) (.+)$/
+      
+      _.each msg.recipients, (recipient) ->
+        if recipient == line_parts[1]
+          rec_status = {
+            number: line_parts[1]
+            status: line_parts[2]
+            code: line_parts[3]
+            msg: line_parts[4]
+          }
+          result.statuses.push rec_status
+    
+    result
   
   _getServiceHost: () ->
     url = "http://"
