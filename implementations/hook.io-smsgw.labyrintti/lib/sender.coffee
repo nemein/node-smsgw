@@ -32,7 +32,6 @@ class Sender
       return cb err if err
       cb null, response
     
-    #url = @_getServiceUrl msg
     http_options = 
       host: @_getServiceHost()
       port: @options.port
@@ -49,13 +48,12 @@ class Sender
       sendResponse result
     
     try
-      req = http.request http_options, (res) ->
-        
+      req = http.request http_options, (res) =>        
         res.setEncoding 'utf8'
         body = ''
         res.on 'data', (chunk) ->
           body += chunk
-        req.on 'end', () ->
+        res.on 'end', () =>
           result =
             code: res.statusCode
             status: 'FAILED'
@@ -67,6 +65,14 @@ class Sender
             sendResponse null, result
           else            
             sendResponse result
+      
+      req.on 'error', (err) ->
+        result =
+          code: err.code
+          errno: err.errno
+          msg: err.message
+        return sendResponse result
+      
       req.write @_generatePostData(msg)
       req.end()
     catch err
@@ -78,11 +84,12 @@ class Sender
   
   _parseResultString: (msg, body, result) ->
     body = decodeURIComponent body
+    lines = body.split("\r\n")
     
-    lines = body.split("\n")
     result.msg = body
     result.statuses = []
     _.each lines, (line) ->
+      return unless line or line.length
       line_parts = line.match /^(\+[0-9]+) (\w+) (\d+) (.+)$/
       
       _.each msg.recipients, (recipient) ->
@@ -90,18 +97,19 @@ class Sender
           rec_status = {
             number: line_parts[1]
             status: line_parts[2]
-            code: line_parts[3]
+            code: parseInt line_parts[3]
             msg: line_parts[4]
           }
-          result.statuses.push rec_status
-    
+          result.statuses.push rec_status      
     result
   
   _getServiceHost: () ->
-    url = "http://"
-    if @options.secure
-      url = "https://"
+    #url = "http://"
+    url = ""
+    # if @options.secure
+    #   url = "https://"
     url += @options.host
+    
     url
   
   _getServicePath: (msg) ->
