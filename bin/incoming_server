@@ -4,7 +4,7 @@ Incominghook = require(__dirname + '/../lib/server/incoming').IncomingHook
 
 incomingServer = new Incominghook
   name: 'smsgw-incoming-server'
-  port: 9000
+  'hook-port': 9000
   debug: true
 
 incomingServer.on 'smsgw_incoming', (message) ->

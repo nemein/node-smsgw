@@ -4,7 +4,7 @@ OutgoingHook = require(__dirname + '/../lib/server/outgoing').OutgoingHook
 
 outgoingServer = new OutgoingHook
   name: 'smsgw-outgoing-server'
-  port: 9001
+  'hook-port': 9001
   debug: true
 
 outgoingServer.on 'smsgw_outgoing_results', (results) ->
@@ -13,4 +13,4 @@ outgoingServer.on 'smsgw_outgoing_results', (results) ->
 outgoingServer.on 'smsgw_outgoing_errors', (errors) ->
   console.log 'Got outgoing errors',errors
 
-outgoingServer.start()
+outgoingServer.listen()
