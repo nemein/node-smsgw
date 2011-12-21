@@ -13,7 +13,7 @@
   ],
   "bin": {
     "hookio-smsgw_incoming": "./bin/incoming_server",
-    "smsgw_manager": "./bin/manager_server"
+    "hookio-smsgw_outgoing": "./bin/outgoing_server"
   },
   "main": "./lib/gateway",
   "engines": {
