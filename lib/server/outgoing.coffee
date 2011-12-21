@@ -42,7 +42,7 @@ class OutgoingHook extends Hook
       hook_name = "smsgw_send_message"      
       if Array.isArray data
         hook_name = "smsgw_send_messages"
-      
+      #console.log 'hook_name',hook_name
       @emit hook_name, @_convertToMessages(imp_name, data), (err, result) =>
         if err
           @emit "smsgw_outgoing_errors", err
@@ -84,16 +84,26 @@ class OutgoingHook extends Hook
     
     imp_name
       
-  _spawnImplementation: (name, next) ->    
+  _spawnImplementation: (name, next) ->
+    #console.log '_spawnImplementation',name
+    #console.log @spawned[name]
     if @spawned[name]
-      return next()
+      if @spawned[name] > 1
+        return next()
+      else
+        @on "children::ready", =>
+          #console.log 'children::ready 1'
+          next()
+        return
     
     spawn_data = _.extend {type: "smsgw.#{name}", name: name, debug: @debug}, @implementations[name].config
     
     @on "children::ready", =>
+      #console.log 'children::ready 2'
       next()
     
+    @spawned[name] = 1
     @spawn [spawn_data], =>
-      @spawned[name] = true
+      @spawned[name] = 2
 
 exports.OutgoingHook = OutgoingHook
