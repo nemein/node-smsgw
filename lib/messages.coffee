@@ -50,6 +50,8 @@ class Message
 
   constructor: (receiver, content) ->    
     @id = uuid()
+    @recipients = []
+    
     if receiver
       @addRecipient receiver
     if content
@@ -81,7 +83,7 @@ class Message
     @recipients.push receiver unless @hasRecipient receiver
   
   hasRecipient: (receiver) ->
-    true if receiver in @recipients
+    return true if receiver in @recipients
     false
     
   setSender: (sender) ->
@@ -152,7 +154,7 @@ class SMS extends Message
   @MAX_HEADER_LENGTH = 140
   
   contructor: (receiver, content) ->    
-    super reciever, content    
+    super receiver, content    
   
   setHeader: (header) ->
     if header and header <= SMSMessage.MAX_HEADER_LENGTH
