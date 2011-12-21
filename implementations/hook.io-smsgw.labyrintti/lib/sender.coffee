@@ -83,8 +83,8 @@ class Sender
       return sendResponse result
   
   _parseResultString: (msg, body, result) ->
-    body = decodeURIComponent body
-    lines = body.split("\r\n")
+    body = decodeURIComponent body    
+    lines = body.toString().split("\r\n")
     
     result.msg = body
     result.statuses = []
@@ -92,10 +92,13 @@ class Sender
       return unless line or line.length
       line_parts = line.match /^(\+[0-9]+) (\w+) (\d+) (.+)$/
       
+      return unless line_parts.length
       _.each msg.recipients, (recipient) ->
-        if recipient == line_parts[1]
+        recipient = recipient.substr(1)
+        if line_parts[1].match(recipient)
           rec_status = {
             number: line_parts[1]
+            matched_number: recipient
             status: line_parts[2]
             code: parseInt line_parts[3]
             msg: line_parts[4]
