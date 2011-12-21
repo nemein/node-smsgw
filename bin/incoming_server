@@ -6,6 +6,7 @@ incomingServer = new Incominghook
   name: 'smsgw-incoming-server'
   'hook-port': 9000
   debug: true
+  verbose: true
 
 incomingServer.on 'smsgw_incoming', (message) ->
   console.log 'Got message',message

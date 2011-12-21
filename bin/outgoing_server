@@ -6,6 +6,7 @@ outgoingServer = new OutgoingHook
   name: 'smsgw-outgoing-server'
   'hook-port': 9001
   debug: true
+  verbose: true
 
 outgoingServer.on 'smsgw_outgoing_results', (results) ->
   console.log 'Got outgoing results',results
